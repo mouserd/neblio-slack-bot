@@ -1,8 +1,9 @@
+from Crypto.Cipher import AES
 import json
 import logging
-import psutil
 import re
 import subprocess
+import psutil
 import sys
 import time
 from hurry.filesize import si
@@ -15,6 +16,10 @@ logging.basicConfig(filename='/var/log/neb/slack-bot.log',
 
 SLACK_BOT_USER_NAME = "pi-bot1"
 SLACK_BOT_API_TOKEN = "xoxb-316184120996-JdkNoxj2EXusbapl8CQ0IKov"
+
+
+def decryption():
+    return AES.new("PythonSlackBot01", AES.MODE_CFB, 'This is an IV456')
 
 
 def friendly_time(seconds, granularity=3):
@@ -66,6 +71,10 @@ def fetch_slack_user_id(username):
             return user.get('id')
 
 
+def send_slack_online_message(online_message, channel="#pi"):
+    slack_client.api_call("chat.postMessage", channel=channel, text=online_message, as_user=True)
+
+
 def send_slack_response(response_message):
     slack_client.api_call("chat.postMessage", channel=message['channel'], text=response_message, as_user=True)
 
@@ -90,7 +99,8 @@ slack_user_id = fetch_slack_user_id(SLACK_BOT_USER_NAME)
 
 # Initiate a slack connection and wait for messages
 if slack_client.rtm_connect():
-    logging.info('Successfully connected to Slack. Waiting for messages...')
+    logging.info("Successfully connected to Slack. Waiting for messages...")
+    send_slack_online_message("Heya! I'm back online, you should ask me some stuff...")
 
     while True:
         for message in slack_client.rtm_read():
@@ -104,13 +114,52 @@ if slack_client.rtm_connect():
                     slack_response = "Yeah, I'm collecting all your nebbles!\n" \
                                      "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
                                      % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
-                        if neb_staking_info['staking'] == True else "No, not right now."
+                        if neb_staking_info['staking'] is True \
+                        else "No, not right now."
+
+                    send_slack_response(slack_response)
+
+                elif re.match(r'.*(unlock).*(wallet).*', message_text, re.IGNORECASE):
+                    with open('/etc/neb.conf', 'r') as f:
+                        phrase = f.read()
+
+                    send_slack_response("OK, trying to unlock your wallet now. This could take a while... please hold :telephone_receiver:")
+                    subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase), shell=True)
+                    attempt = 0
+                    while attempt < 10:
+                        neb_staking_info = json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
+                        if neb_staking_info['staking'] is True:
+                            break
+                        attempt += 1
+                        time.sleep(1)
+
+                    slack_response = "OK, I've unlocked your wallet and I'm now staking!\n" \
+                                     "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
+                                     % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
+                        if neb_staking_info['staking'] is True \
+                        else "Sorry, I wasn't able to unlock your wallet... you may have to take over."
+
+                    send_slack_response(slack_response)
+
+                elif re.match(r'.*(lock).*(wallet).*', message_text, re.IGNORECASE):
+                    subprocess.call("/home/pi/nebliod walletlock", shell=True)
+                    send_slack_response("OK, I've locked your wallet and I'm no longer staking!\n")
+
+                elif re.match(r'.*(how many).*(connections).*', message_text, re.IGNORECASE):
+                    neb_info = json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
+                    slack_response = "There are *%s* connections on the neblio network!\n" % neb_info['connections']
+
+                    send_slack_response(slack_response)
+
+                elif re.match(r'.*(how many).*(neblio|nebbles).*', message_text, re.IGNORECASE):
+                    neb_info = json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
+                    slack_response = "You've got *%s* nebbles in your wallet - sweet!\n" % neb_info['balance']
 
                     send_slack_response(slack_response)
 
                 elif re.match(r'.*(neblio).*', message_text, re.IGNORECASE):
                     neb_is_running = len(find_process_by_name("nebliod")) > 0
-                    slack_response = "It sure is!" if neb_is_running else "It doesn't appear to be."
+                    slack_response = "Yep, it sure is!" if neb_is_running else "It doesn't appear to be."
 
                     send_slack_response(slack_response)
 
@@ -118,7 +167,8 @@ if slack_client.rtm_connect():
                     top_processes_mem = reversed([(p.pid, p.info) for p in get_processes_sorted_by_memory()][-5:])
                     slack_response = "These are my *top 5* processes using the most memory:\n%s" % "\n".join(
                         "  %s. *%s*,  %s%% (pid: %s)" % (idx + 1, p[1]['name'], round(p[1]['memory_percent'], 2), p[0]) for idx, p in enumerate(top_processes_mem)) \
-                        if top_processes_mem is not None else "Well this is embarrassing... I couldn't work that out!"
+                        if top_processes_mem is not None \
+                        else "Well this is embarrassing... I couldn't work that out!"
 
                     send_slack_response(slack_response)
 
@@ -127,7 +177,8 @@ if slack_client.rtm_connect():
                     slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n"\
                         .join("  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'],
                                                              friendly_time(p[2]), p[0]) for idx, p in enumerate(top_processes_cpu)) \
-                        if top_processes_cpu is not None else "Well this is embarrassing... I couldn't work that out!"
+                        if top_processes_cpu is not None \
+                        else "Well this is embarrassing... I couldn't work that out!"
 
                     send_slack_response(slack_response)
 
@@ -135,9 +186,19 @@ if slack_client.rtm_connect():
                     active_processes = get_processes_running_now()
                     slack_response = "I have these *active* processes running:\n%s" % "\n"\
                         .join("  %s. *%s* (pid: %s)" % (idx + 1, p[1], p[0]) for idx, p in enumerate(active_processes)) \
-                        if active_processes is not None else "There are no processes running at the moment."
+                        if active_processes is not None \
+                        else "There are no processes running at the moment."
 
                     send_slack_response(slack_response)
+
+                elif re.match(r'.*(ip address|ipaddress).*', message_text, re.IGNORECASE):
+                    ip_address = subprocess.check_output("hostname -I", shell=True).strip()
+
+                    send_slack_response("My IP address is *%s*\n" % ip_address)
+
+                elif re.match(r'.*(reboot|restart).*', message_text, re.IGNORECASE):
+                    send_slack_response("Sure, rebooting myself now. BRB!")
+                    neb_staking_info = subprocess.call("sudo reboot", shell=True)
 
                 elif re.match(r'.*(running|uptime).*', message_text, re.IGNORECASE):
                     uptime = friendly_time(time.time() - psutil.boot_time())
@@ -157,7 +218,7 @@ if slack_client.rtm_connect():
                                                                                    size(mem.free, system=si),
                                                                                    size(mem.used, system=si))
 
-                    send_slack_response("My memory is *%s%%* free.\n%s" % (mem_pct, mem_detail))
+                    send_slack_response("I am using *%s%%* of available free memory.\n%s" % (mem_pct, mem_detail))
 
                 elif re.match(r'.*(disk|space).*', message_text, re.IGNORECASE):
                     disk = psutil.disk_usage('/')
