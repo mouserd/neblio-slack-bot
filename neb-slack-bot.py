@@ -1,7 +1,7 @@
 import json
-import psutil
 import re
 import subprocess
+import psutil
 import time
 from hurry.filesize import si
 from hurry.filesize import size
@@ -19,7 +19,7 @@ intervals = (
 )
 
 
-def display_time(seconds, granularity=2):
+def friendly_time(seconds, granularity=2):
     result = []
 
     for name, count in intervals:
@@ -32,7 +32,7 @@ def display_time(seconds, granularity=2):
     return ', '.join(result[:granularity])
 
 
-def find_procs_by_name(name):
+def find_process_by_name(name):
     ls = []
     for p in psutil.process_iter(attrs=['name']):
         if p.info['name'] == name:
@@ -48,7 +48,7 @@ def slack_message_tagged_user_marker(user_id):
     return "<@%s>" % user_id
 
 
-def extract_slack_message_text():
+def sanitize_slack_message_text():
     return message['text']. \
         replace(slack_message_tagged_user_marker(slack_user_id), ''). \
         strip()
@@ -73,19 +73,19 @@ if slack_client.rtm_connect():
 
                 # print "Message received: %s" % json.dumps(message, indent=2)
                 print "Message received: %s" % message['text']
-                message_text = extract_slack_message_text()
+                message_text = sanitize_slack_message_text()
 
                 if re.match(r'.*(staking).*', message_text, re.IGNORECASE):
                     neb_staking_info = json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
                     slack_response = "Yeah, I'm collecting all your nebbles!\n" \
                                      "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
-                                     % (neb_staking_info['weight'], display_time(neb_staking_info['expectedtime'], 3)) \
+                                     % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'], 3)) \
                         if neb_staking_info['staking'] == True else "No, not right now."
 
                     send_slack_response(slack_response)
 
                 elif re.match(r'.*(neblio).*', message_text, re.IGNORECASE):
-                    neb_is_running = len(find_procs_by_name("nebliod")) > 0
+                    neb_is_running = len(find_process_by_name("nebliod")) > 0
                     slack_response = "It sure is!" if neb_is_running else "It doesn't appear to be."
 
                     send_slack_response(slack_response)
@@ -105,7 +105,7 @@ if slack_client.rtm_connect():
                                                   sorted(psutil.process_iter(attrs=['name', 'cpu_times', 'cpu_percent']),
                                                          key=lambda p: sum(p.info['cpu_times'][:2]))][-5:])
                     slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n".join(
-                        "  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'], display_time(p[2]), p[0]) for idx, p in enumerate(
+                        "  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'], friendly_time(p[2]), p[0]) for idx, p in enumerate(
                             top_processes_cpu)) if top_processes_cpu != None else "Well this is embarassing... I couldn't work that out!"
 
                     send_slack_response(slack_response)
@@ -119,7 +119,7 @@ if slack_client.rtm_connect():
                     send_slack_response(slack_response)
 
                 elif re.match(r'.*(running|uptime).*', message_text, re.IGNORECASE):
-                    uptime = display_time(time.time() - psutil.boot_time())
+                    uptime = friendly_time(time.time() - psutil.boot_time())
 
                     send_slack_response("I've been up and running for *%s*." % uptime)
 
@@ -149,6 +149,9 @@ if slack_client.rtm_connect():
 
                 elif re.match(r'.*(hello|hey|hi).*', message_text, re.IGNORECASE):
                     send_slack_response("Hellllo! And how are you?")
+
+                elif re.match(r'.*(bye).*', message_text, re.IGNORECASE):
+                    send_slack_response("See you!")
 
                 elif re.match(r'.*(good).*', message_text, re.IGNORECASE):
                     send_slack_response("Sweet! Good and you?")
