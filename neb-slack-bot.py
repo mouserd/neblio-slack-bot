@@ -2,6 +2,7 @@ import re
 import time
 import psutil
 import subprocess
+import json
 from slackclient import SlackClient
 from hurry.filesize import size
 from hurry.filesize import si
@@ -38,15 +39,16 @@ def find_procs_by_name(name):
 
 
 def send_slack_response(response_message):
-    slack_client.api_call(
-        "chat.postMessage",
-        channel=message['channel'],
-        text=response_message,
-        as_user=True)
+    slack_client.api_call("chat.postMessage", channel=message['channel'], text=response_message, as_user=True)
 
 def slack_message_tagged_user_marker(user_id):
     return "<@%s>" % user_id
 
+
+def extract_slack_message_text():
+    return message['text']. \
+        replace(slack_message_tagged_user_marker(slack_user_id), ''). \
+        strip()
 
 slack_client = SlackClient(SLACK_BOT_API_TOKEN)
 
@@ -56,6 +58,7 @@ for user in user_list.get('members'):
     if user.get('name') == SLACK_BOT_USER_ID:
         slack_user_id = user.get('id')
         break
+
 
 # Start connection
 if slack_client.rtm_connect():
@@ -67,19 +70,14 @@ if slack_client.rtm_connect():
 
                 # print "Message received: %s" % json.dumps(message, indent=2)
                 print "Message received: %s" % message['text']
-
-                message_text = message['text'].\
-                    replace(slack_message_tagged_user_marker(slack_user_id), '').\
-                    strip()
-                print "Message text only: %s" % message_text
-                print "User placeholder: %s" % slack_message_tagged_user_marker(slack_user_id)
+                message_text = extract_slack_message_text()
 
                 if re.match(r'.*(staking).*', message_text, re.IGNORECASE):
-                    neb_is_staking = subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .staking", shell=True).strip() == 'true'
-                    neb_next_stake_time = int(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .expectedtime", shell=True).strip())
-                    slack_response = "Yeah, I'm collecting all your nebbles! " \
-                                     "I estimate you'll get your next stake in about *%s*." % display_time(neb_next_stake_time, 3) \
-                        if neb_is_staking else "No, not right now."
+                    neb_staking_info = json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
+                    slack_response = "Yeah, I'm collecting all your nebbles!\n" \
+                                     "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
+                                     % (neb_staking_info['weight'], display_time(neb_staking_info['expectedtime'], 3)) \
+                        if neb_staking_info['staking'] == True else "No, not right now."
 
                     send_slack_response(slack_response)
 
