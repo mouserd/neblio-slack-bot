@@ -1,11 +1,12 @@
-from Crypto.Cipher import AES
 import json
 import logging
 import re
 import subprocess
+
 import psutil
 import sys
 import time
+from Crypto.Cipher import AES
 from hurry.filesize import si
 from hurry.filesize import size
 from slackclient import SlackClient
@@ -64,6 +65,14 @@ def get_processes_sorted_by_cpu():
     return sorted(psutil.process_iter(attrs=['name', 'cpu_times', 'cpu_percent']), key=lambda p: sum(p.info['cpu_times'][:2]))
 
 
+def get_neblio_staking_info():
+    return json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
+
+
+def get_neblio_info():
+    return json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
+
+
 def fetch_slack_user_id(username):
     user_list = slack_client.api_call("users.list")
     for user in user_list.get('members'):
@@ -75,8 +84,8 @@ def send_slack_online_message(online_message, channel="#pi"):
     slack_client.api_call("chat.postMessage", channel=channel, text=online_message, as_user=True)
 
 
-def send_slack_response(response_message):
-    slack_client.api_call("chat.postMessage", channel=message['channel'], text=response_message, as_user=True)
+def send_slack_response(response_message, icon_emoji=":pi:"):
+    slack_client.api_call("chat.postMessage", channel=message['channel'], text=response_message, as_user=False, icon_emoji=icon_emoji)
 
 
 def slack_message_tagged_user_marker(user_id):
@@ -97,6 +106,7 @@ time.sleep(delay_startup)
 slack_client = SlackClient(SLACK_BOT_API_TOKEN)
 slack_user_id = fetch_slack_user_id(SLACK_BOT_USER_NAME)
 
+
 # Initiate a slack connection and wait for messages
 if slack_client.rtm_connect():
     logging.info("Successfully connected to Slack. Waiting for messages...")
@@ -109,8 +119,25 @@ if slack_client.rtm_connect():
                 logging.info("Message received: %s" % message['text'])
                 message_text = sanitize_slack_message_text()
 
-                if re.match(r'.*(staking).*', message_text, re.IGNORECASE):
-                    neb_staking_info = json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
+                if re.match(r'.*(neblio).*(info).*', message_text, re.IGNORECASE):
+                    neb_info = get_neblio_info()
+                    neb_staking_info = get_neblio_staking_info()
+                    is_staking = neb_staking_info['staking'] is True
+                    slack_response = "Neblio staking is currently: *%s*\n" \
+                                     "Your weight is: *%s*.\n" \
+                                     "Next stake is due in: *%s*\n" \
+                                     "Connections on the neblio network: *%s*\n" \
+                                     "You are running daemon version: *%s*" % (
+                                         "active" if is_staking else "inactive",
+                                         neb_staking_info['weight'],
+                                         friendly_time(neb_staking_info['expectedtime']) if is_staking else "N/A",
+                                         neb_info['connections'],
+                                         neb_info['version'])
+
+                    send_slack_response(slack_response)
+
+                elif re.match(r'.*(staking).*', message_text, re.IGNORECASE):
+                    neb_staking_info = get_neblio_staking_info()
                     slack_response = "Yeah, I'm collecting all your nebbles!\n" \
                                      "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
                                      % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
@@ -127,7 +154,7 @@ if slack_client.rtm_connect():
                     subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase), shell=True)
                     attempt = 0
                     while attempt < 10:
-                        neb_staking_info = json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
+                        neb_staking_info = get_neblio_staking_info()
                         if neb_staking_info['staking'] is True:
                             break
                         attempt += 1
@@ -146,24 +173,24 @@ if slack_client.rtm_connect():
                     send_slack_response("OK, I've locked your wallet and I'm no longer staking!\n")
 
                 elif re.match(r'.*(how many).*(connections).*', message_text, re.IGNORECASE):
-                    neb_info = json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
+                    neb_info = get_neblio_info()
                     slack_response = "There are *%s* connections on the neblio network!\n" % neb_info['connections']
 
                     send_slack_response(slack_response)
 
                 elif re.match(r'.*(how many).*(neblio|nebbles).*', message_text, re.IGNORECASE):
-                    neb_info = json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
+                    neb_info = get_neblio_info()
                     slack_response = "You've got *%s* nebbles in your wallet - sweet!\n" % neb_info['balance']
 
                     send_slack_response(slack_response)
 
-                elif re.match(r'.*(neblio).*', message_text, re.IGNORECASE):
+                elif re.match(r'.*(neblio).*(running|active).*', message_text, re.IGNORECASE):
                     neb_is_running = len(find_process_by_name("nebliod")) > 0
                     slack_response = "Yep, it sure is!" if neb_is_running else "It doesn't appear to be."
 
                     send_slack_response(slack_response)
 
-                elif re.match(r'.*(most ram|most memory).*', message_text, re.IGNORECASE):
+                elif re.match(r'.*(processes).*(most ram|most memory).*', message_text, re.IGNORECASE):
                     top_processes_mem = reversed([(p.pid, p.info) for p in get_processes_sorted_by_memory()][-5:])
                     slack_response = "These are my *top 5* processes using the most memory:\n%s" % "\n".join(
                         "  %s. *%s*,  %s%% (pid: %s)" % (idx + 1, p[1]['name'], round(p[1]['memory_percent'], 2), p[0]) for idx, p in enumerate(top_processes_mem)) \
@@ -172,7 +199,7 @@ if slack_client.rtm_connect():
 
                     send_slack_response(slack_response)
 
-                elif re.match(r'.*(most cpu).*', message_text, re.IGNORECASE):
+                elif re.match(r'.*(processes).*(most cpu).*', message_text, re.IGNORECASE):
                     top_processes_cpu = reversed([(p.pid, p.info, sum(p.info['cpu_times'])) for p in get_processes_sorted_by_cpu()][-5:])
                     slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n"\
                         .join("  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'],
@@ -182,7 +209,7 @@ if slack_client.rtm_connect():
 
                     send_slack_response(slack_response)
 
-                elif re.match(r'.*(active).*', message_text, re.IGNORECASE):
+                elif re.match(r'.*(active processes).*', message_text, re.IGNORECASE):
                     active_processes = get_processes_running_now()
                     slack_response = "I have these *active* processes running:\n%s" % "\n"\
                         .join("  %s. *%s* (pid: %s)" % (idx + 1, p[1], p[0]) for idx, p in enumerate(active_processes)) \
