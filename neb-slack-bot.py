@@ -134,7 +134,7 @@ if slack_client.rtm_connect():
                                          neb_info['connections'],
                                          neb_info['version'])
 
-                    send_slack_response(slack_response)
+                    send_slack_response(slack_response, ':pi-nebl:')
 
                 elif re.match(r'.*(staking).*', message_text, re.IGNORECASE):
                     neb_staking_info = get_neblio_staking_info()
@@ -144,7 +144,7 @@ if slack_client.rtm_connect():
                         if neb_staking_info['staking'] is True \
                         else "No, not right now."
 
-                    send_slack_response(slack_response)
+                    send_slack_response(slack_response, ':pi-nebl:')
 
                 elif re.match(r'.*(unlock).*(wallet).*', message_text, re.IGNORECASE):
                     with open('/etc/neb.conf', 'r') as f:
@@ -166,23 +166,23 @@ if slack_client.rtm_connect():
                         if neb_staking_info['staking'] is True \
                         else "Sorry, I wasn't able to unlock your wallet... you may have to take over."
 
-                    send_slack_response(slack_response)
+                    send_slack_response(slack_response, ':pi-nebl:')
 
                 elif re.match(r'.*(lock).*(wallet).*', message_text, re.IGNORECASE):
                     subprocess.call("/home/pi/nebliod walletlock", shell=True)
-                    send_slack_response("OK, I've locked your wallet and I'm no longer staking!\n")
+                    send_slack_response("OK, I've locked your wallet and I'm no longer staking!\n", ':pi-nebl:')
 
                 elif re.match(r'.*(how many).*(connections).*', message_text, re.IGNORECASE):
                     neb_info = get_neblio_info()
                     slack_response = "There are *%s* connections on the neblio network!\n" % neb_info['connections']
 
-                    send_slack_response(slack_response)
+                    send_slack_response(slack_response, ':pi-nebl:')
 
                 elif re.match(r'.*(how many).*(neblio|nebbles).*', message_text, re.IGNORECASE):
                     neb_info = get_neblio_info()
                     slack_response = "You've got *%s* nebbles in your wallet - sweet!\n" % neb_info['balance']
 
-                    send_slack_response(slack_response)
+                    send_slack_response(slack_response, ':pi-nebl:')
 
                 elif re.match(r'.*(neblio).*(running|active).*', message_text, re.IGNORECASE):
                     neb_is_running = len(find_process_by_name("nebliod")) > 0
