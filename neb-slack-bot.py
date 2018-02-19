@@ -1,11 +1,11 @@
 import json
 import logging
 import re
-import subprocess
-
 import psutil
+import subprocess
 import sys
 import time
+import traceback
 from Crypto.Cipher import AES
 from hurry.filesize import si
 from hurry.filesize import size
@@ -116,6 +116,7 @@ if slack_client.rtm_connect():
     send_slack_online_message("Heya! I'm back online, you should ask me some stuff...")
 
     while True:
+
         for message in slack_client.rtm_read():
             if 'text' in message and slack_message_tagged_user_marker(slack_user_id) in message['text']:
 
@@ -123,153 +124,162 @@ if slack_client.rtm_connect():
                 message_text = sanitize_slack_message_text()
                 message_channel = message['channel']
 
-                if re.match(r'.*(neblio).*(info).*', message_text, re.IGNORECASE):
-                    neb_info = get_neblio_info()
-                    neb_staking_info = get_neblio_staking_info()
-                    is_staking = neb_staking_info['staking'] is True
-                    slack_response = "Neblio staking is currently: *%s*\n" \
-                                     "Your weight is: *%s*.\n" \
-                                     "Next stake is due in: *%s*\n" \
-                                     "Connections on the neblio network: *%s*\n" \
-                                     "You are running daemon version: *%s*" % (
-                                         "active" if is_staking else "inactive",
-                                         neb_staking_info['weight'],
-                                         friendly_time(neb_staking_info['expectedtime']) if is_staking else "N/A",
-                                         neb_info['connections'],
-                                         neb_info['version'])
-
-                    send_slack_response(slack_response, message_channel)
-
-                elif re.match(r'.*(staking).*', message_text, re.IGNORECASE):
-                    neb_staking_info = get_neblio_staking_info()
-                    slack_response = "Yeah, I'm collecting all your nebbles!\n" \
-                                     "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
-                                     % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
-                        if neb_staking_info['staking'] is True \
-                        else "No, not right now."
-
-                    send_slack_response(slack_response, message_channel)
-
-                elif re.match(r'.*(unlock).*(wallet).*', message_text, re.IGNORECASE):
-                    with open('/etc/neb.conf', 'r') as f:
-                        phrase = f.read()
-
-                    send_slack_response("OK, trying to unlock your wallet now. This could take a while... please hold :telephone_receiver:", message['channel'])
-                    subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase), shell=True)
-                    attempt = 0
-                    while attempt < 10:
+                try:
+                    if re.match(r'.*(neblio).*(info).*', message_text, re.IGNORECASE):
+                        neb_info = get_neblio_info()
                         neb_staking_info = get_neblio_staking_info()
-                        if neb_staking_info['staking'] is True:
-                            break
-                        attempt += 1
-                        time.sleep(1)
+                        is_staking = neb_staking_info['staking'] is True
+                        slack_response = "Neblio staking is currently: *%s*\n" \
+                                         "Your weight is: *%s*.\n" \
+                                         "Next stake is due in: *%s*\n" \
+                                         "Connections on the neblio network: *%s*\n" \
+                                         "You are running daemon version: *%s*" % (
+                                             "active" if is_staking else "inactive",
+                                             neb_staking_info['weight'],
+                                             friendly_time(neb_staking_info['expectedtime']) if is_staking else "N/A",
+                                             neb_info['connections'],
+                                             neb_info['version'])
 
-                    slack_response = "OK, I've unlocked your wallet and I'm now staking!\n" \
-                                     "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
-                                     % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
-                        if neb_staking_info['staking'] is True \
-                        else "Sorry, I wasn't able to unlock your wallet... you may have to take over."
+                        send_slack_response(slack_response, message_channel)
 
-                    send_slack_response(slack_response, message_channel)
+                    elif re.match(r'.*(staking).*', message_text, re.IGNORECASE):
+                        neb_staking_info = get_neblio_staking_info()
+                        slack_response = "Yeah, I'm collecting all your nebbles!\n" \
+                                         "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
+                                         % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
+                            if neb_staking_info['staking'] is True \
+                            else "No, not right now."
 
-                elif re.match(r'.*(lock).*(wallet).*', message_text, re.IGNORECASE):
-                    subprocess.call("/home/pi/nebliod walletlock", shell=True)
-                    send_slack_response("OK, I've locked your wallet and I'm no longer staking!\n", message_channel)
+                        send_slack_response(slack_response, message_channel)
 
-                elif re.match(r'.*(how many).*(connections).*', message_text, re.IGNORECASE):
-                    neb_info = get_neblio_info()
-                    slack_response = "There are *%s* connections on the neblio network!\n" % neb_info['connections']
+                    elif re.match(r'.*(unlock).*(wallet).*', message_text, re.IGNORECASE):
+                        with open('/etc/neb.conf', 'r') as f:
+                            phrase = f.read()
 
-                    send_slack_response(slack_response, message_channel)
+                        send_slack_response("OK, trying to unlock your wallet now. This could take a while... "
+                                            "please hold :telephone_receiver:", message['channel'])
+                        subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase), shell=True)
+                        attempt = 0
+                        while attempt < 10:
+                            neb_staking_info = get_neblio_staking_info()
+                            if neb_staking_info['staking'] is True:
+                                break
+                            attempt += 1
+                            time.sleep(1)
 
-                elif re.match(r'.*(how many).*(neblio|nebbles).*', message_text, re.IGNORECASE):
-                    neb_info = get_neblio_info()
-                    slack_response = "You've got *%s* nebbles in your wallet - sweet!\n" % neb_info['balance']
+                        slack_response = "OK, I've unlocked your wallet and I'm now staking!\n" \
+                                         "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
+                                         % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
+                            if neb_staking_info['staking'] is True \
+                            else "Sorry, I wasn't able to unlock your wallet... you may have to take over."
 
-                    send_slack_response(slack_response, message_channel)
+                        send_slack_response(slack_response, message_channel)
 
-                elif re.match(r'.*(neblio).*(running|active).*', message_text, re.IGNORECASE):
-                    neb_is_running = len(find_process_by_name("nebliod")) > 0
-                    slack_response = "Yep, it sure is!" if neb_is_running else "It doesn't appear to be."
+                    elif re.match(r'.*(lock).*(wallet).*', message_text, re.IGNORECASE):
+                        subprocess.call("/home/pi/nebliod walletlock", shell=True)
+                        send_slack_response("OK, I've locked your wallet and I'm no longer staking!\n", message_channel)
 
-                    send_slack_response(slack_response, message_channel)
+                    elif re.match(r'.*(how many).*(connections).*', message_text, re.IGNORECASE):
+                        neb_info = get_neblio_info()
+                        slack_response = "There are *%s* connections on the neblio network!\n" % neb_info['connections']
 
-                elif re.match(r'.*(processes).*(most ram|most memory).*', message_text, re.IGNORECASE):
-                    top_processes_mem = reversed([(p.pid, p.info) for p in get_processes_sorted_by_memory()][-5:])
-                    slack_response = "These are my *top 5* processes using the most memory:\n%s" % "\n".join(
-                        "  %s. *%s*,  %s%% (pid: %s)" % (idx + 1, p[1]['name'], round(p[1]['memory_percent'], 2), p[0]) for idx, p in enumerate(top_processes_mem)) \
-                        if top_processes_mem is not None \
-                        else "Well this is embarrassing... I couldn't work that out!"
+                        send_slack_response(slack_response, message_channel)
 
-                    send_slack_response(slack_response, message_channel)
+                    elif re.match(r'.*(how many).*(neblio|nebbles).*', message_text, re.IGNORECASE):
+                        neb_info = get_neblio_info()
+                        slack_response = "You've got *%s* nebbles in your wallet - sweet!\n" % neb_info['balance']
 
-                elif re.match(r'.*(processes).*(most cpu).*', message_text, re.IGNORECASE):
-                    top_processes_cpu = reversed([(p.pid, p.info, sum(p.info['cpu_times'])) for p in get_processes_sorted_by_cpu()][-5:])
-                    slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n"\
-                        .join("  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'],
-                                                             friendly_time(p[2]), p[0]) for idx, p in enumerate(top_processes_cpu)) \
-                        if top_processes_cpu is not None \
-                        else "Well this is embarrassing... I couldn't work that out!"
+                        send_slack_response(slack_response, message_channel)
 
-                    send_slack_response(slack_response, message_channel)
+                    elif re.match(r'.*(neblio).*(running|active).*', message_text, re.IGNORECASE):
+                        neb_is_running = len(find_process_by_name("nebliod")) > 0
+                        slack_response = "Yep, it sure is!" if neb_is_running else "It doesn't appear to be."
 
-                elif re.match(r'.*(active processes).*', message_text, re.IGNORECASE):
-                    active_processes = get_processes_running_now()
-                    slack_response = "I have these *active* processes running:\n%s" % "\n"\
-                        .join("  %s. *%s* (pid: %s)" % (idx + 1, p[1], p[0]) for idx, p in enumerate(active_processes)) \
-                        if active_processes is not None \
-                        else "There are no processes running at the moment."
+                        send_slack_response(slack_response, message_channel)
 
-                    send_slack_response(slack_response, message_channel)
+                    elif re.match(r'.*(processes).*(most ram|most memory).*', message_text, re.IGNORECASE):
+                        top_processes_mem = reversed([(p.pid, p.info) for p in get_processes_sorted_by_memory()][-5:])
+                        slack_response = "These are my *top 5* processes using the most memory:\n%s" % "\n".join(
+                            "  %s. *%s*,  %s%% (pid: %s)" % (idx + 1, p[1]['name'], round(p[1]['memory_percent'], 2), p[0])
+                            for idx, p in enumerate(top_processes_mem)) \
+                            if top_processes_mem is not None \
+                            else "Well this is embarrassing... I couldn't work that out!"
 
-                elif re.match(r'.*(ip address|ipaddress).*', message_text, re.IGNORECASE):
-                    ip_address = subprocess.check_output("hostname -I", shell=True).strip()
+                        send_slack_response(slack_response, message_channel)
 
-                    send_slack_response("My IP address is *%s*\n" % ip_address, message_channel)
+                    elif re.match(r'.*(processes).*(most cpu).*', message_text, re.IGNORECASE):
+                        top_processes_cpu = reversed([(p.pid, p.info, sum(p.info['cpu_times']))
+                                                      for p in get_processes_sorted_by_cpu()][-5:])
+                        slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n"\
+                            .join("  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'],
+                                                                 friendly_time(p[2]), p[0]) for idx, p in enumerate(top_processes_cpu)) \
+                            if top_processes_cpu is not None \
+                            else "Well this is embarrassing... I couldn't work that out!"
 
-                elif re.match(r'.*(reboot|restart).*', message_text, re.IGNORECASE):
-                    send_slack_response("Sure, rebooting myself now. BRB!", message_channel)
-                    neb_staking_info = subprocess.call("sudo reboot", shell=True)
+                        send_slack_response(slack_response, message_channel)
 
-                elif re.match(r'.*(running|uptime).*', message_text, re.IGNORECASE):
-                    uptime = friendly_time(time.time() - psutil.boot_time())
+                    elif re.match(r'.*(active processes).*', message_text, re.IGNORECASE):
+                        active_processes = get_processes_running_now()
+                        slack_response = "I have these *active* processes running:\n%s" % "\n"\
+                            .join("  %s. *%s* (pid: %s)" % (idx + 1, p[1], p[0]) for idx, p in enumerate(active_processes)) \
+                            if active_processes is not None \
+                            else "There are no processes running at the moment."
 
-                    send_slack_response("I've been up and running for *%s*." % uptime, message_channel)
+                        send_slack_response(slack_response, message_channel)
 
-                elif re.match(r'.*(cpu).*', message_text, re.IGNORECASE):
-                    cpu_pct = psutil.cpu_percent(interval=2, percpu=False)
+                    elif re.match(r'.*(ip address|ipaddress).*', message_text, re.IGNORECASE):
+                        ip_address = subprocess.check_output("hostname -I", shell=True).strip()
 
-                    send_slack_response("My CPU is at *%s%%*." % cpu_pct, message_channel)
+                        send_slack_response("My IP address is *%s*\n" % ip_address, message_channel)
 
-                elif re.match(r'.*(memory|ram).*', message_text, re.IGNORECASE):
-                    mem = psutil.virtual_memory()
-                    mem_pct = mem.percent
-                    mem_detail = "Total: %s, available: %s, free: %s, used: %s" % (size(mem.total, system=si),
-                                                                                   size(mem.available, system=si),
-                                                                                   size(mem.free, system=si),
-                                                                                   size(mem.used, system=si))
+                    elif re.match(r'.*(reboot|restart).*', message_text, re.IGNORECASE):
+                        send_slack_response("Sure, rebooting myself now. BRB!", message_channel)
+                        neb_staking_info = subprocess.call("sudo reboot", shell=True)
 
-                    send_slack_response("I am using *%s%%* of available free memory.\n%s" % (mem_pct, mem_detail), message_channel)
+                    elif re.match(r'.*(running|uptime).*', message_text, re.IGNORECASE):
+                        uptime = friendly_time(time.time() - psutil.boot_time())
 
-                elif re.match(r'.*(disk|space).*', message_text, re.IGNORECASE):
-                    disk = psutil.disk_usage('/')
-                    disk_pct = disk.percent
-                    disk_detail = "Total: %s, free: %s, used: %s" % (size(disk.total, system=si),
-                                                                     size(disk.free, system=si),
-                                                                     size(disk.used, system=si))
+                        send_slack_response("I've been up and running for *%s*." % uptime, message_channel)
 
-                    send_slack_response("My disk is at *%s%%* of capacity.\n%s" % (disk_pct, disk_detail), message_channel)
+                    elif re.match(r'.*(cpu).*', message_text, re.IGNORECASE):
+                        cpu_pct = psutil.cpu_percent(interval=2, percpu=False)
 
-                elif re.match(r'.*(hello|hey|hi).*', message_text, re.IGNORECASE):
-                    send_slack_response("Hellllo! And how are you?", message_channel)
+                        send_slack_response("My CPU is at *%s%%*." % cpu_pct, message_channel)
 
-                elif re.match(r'.*(bye).*', message_text, re.IGNORECASE):
-                    send_slack_response("See you!", message_channel)
+                    elif re.match(r'.*(memory|ram).*', message_text, re.IGNORECASE):
+                        mem = psutil.virtual_memory()
+                        mem_pct = mem.percent
+                        mem_detail = "Total: %s, available: %s, free: %s, used: %s" % (size(mem.total, system=si),
+                                                                                       size(mem.available, system=si),
+                                                                                       size(mem.free, system=si),
+                                                                                       size(mem.used, system=si))
 
-                elif re.match(r'.*(good).*', message_text, re.IGNORECASE):
-                    send_slack_response("Sweet! Good and you?", message_channel)
+                        send_slack_response("I am using *%s%%* of available free memory.\n%s" % (mem_pct, mem_detail), message_channel)
 
-                else:
-                    send_slack_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
+                    elif re.match(r'.*(disk|space).*', message_text, re.IGNORECASE):
+                        disk = psutil.disk_usage('/')
+                        disk_pct = disk.percent
+                        disk_detail = "Total: %s, free: %s, used: %s" % (size(disk.total, system=si),
+                                                                         size(disk.free, system=si),
+                                                                         size(disk.used, system=si))
+
+                        send_slack_response("My disk is at *%s%%* of capacity.\n%s" % (disk_pct, disk_detail), message_channel)
+
+                    elif re.match(r'.*(hello|hey|hi).*', message_text, re.IGNORECASE):
+                        send_slack_response("Hellllo! And how are you?", message_channel)
+
+                    elif re.match(r'.*(bye).*', message_text, re.IGNORECASE):
+                        send_slack_response("See you!", message_channel)
+
+                    elif re.match(r'.*(good).*', message_text, re.IGNORECASE):
+                        send_slack_response("Sweet! Good and you?", message_channel)
+
+                    else:
+                        send_slack_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
+
+                except Exception as e:
+                    send_slack_response(":fire: :fire: :fire:\n :fire: Oh no!  I just crashed! (%s: %s)\n:fire: :fire: :fire:"
+                                        % (e.__doc__, e.__cause__), message_channel)
+                    logging.error(traceback.format_exc())
 
         time.sleep(1)
