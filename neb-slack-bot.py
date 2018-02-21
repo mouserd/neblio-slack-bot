@@ -218,7 +218,7 @@ if slack_client.rtm_connect():
 
                         send_slack_response(slack_response, message_channel)
 
-                    elif re.match(r'.*(active processes).*', message_text, re.IGNORECASE):
+                    elif re.match(r'.*(active processes|running processes).*', message_text, re.IGNORECASE):
                         active_processes = get_processes_running_now()
                         slack_response = "I have these *active* processes running:\n%s" % "\n"\
                             .join("  %s. *%s* (pid: %s)" % (idx + 1, p[1], p[0]) for idx, p in enumerate(active_processes)) \
@@ -273,6 +273,9 @@ if slack_client.rtm_connect():
 
                     elif re.match(r'.*(good).*', message_text, re.IGNORECASE):
                         send_slack_response("Sweet! Good and you?", message_channel)
+
+                    elif re.match(r'.*(when moon).*', message_text, re.IGNORECASE):
+                        send_slack_response("SOON! :rocket: :crescent_moon:", message_channel)
 
                     else:
                         send_slack_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
