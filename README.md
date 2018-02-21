@@ -83,3 +83,7 @@ And add the following to the bottom of your cron:
 ```
 @reboot /usr/bin/python /home/pi/scripts/neb-slack-bot.py 30 >> /var/log/neb/slack-bot.log 2>&1
 ```
+
+## Advanced - Unlocking your wallet
+
+TBC
