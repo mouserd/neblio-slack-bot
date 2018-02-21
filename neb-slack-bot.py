@@ -15,8 +15,8 @@ logging.basicConfig(filename='/var/log/neb/slack-bot.log',
                     format='%(asctime)s: [%(levelname)s] %(message)s',
                     level=logging.INFO)
 
-SLACK_BOT_USER_NAME = "pi-bot1"
-SLACK_BOT_API_TOKEN = "xoxb-316184120996-JdkNoxj2EXusbapl8CQ0IKov"
+SLACK_BOT_USER_NAME = "<<ADD YOUR SLACK BOT USERNAME HERE>>"
+SLACK_BOT_API_TOKEN = "<<ADD YOUR SLACK BOT API TOKEN HERE>>"
 
 
 def decryption():
