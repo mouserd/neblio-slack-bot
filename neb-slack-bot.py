@@ -15,12 +15,13 @@ logging.basicConfig(filename='/var/log/neb/slack-bot.log',
                     format='%(asctime)s: [%(levelname)s] %(message)s',
                     level=logging.INFO)
 
-SLACK_BOT_USER_NAME = "<<ADD YOUR SLACK BOT USERNAME HERE>>"
-SLACK_BOT_API_TOKEN = "<<ADD YOUR SLACK BOT API TOKEN HERE>>"
+SLACK_BOT_USER_NAME = '<<ADD YOUR SLACK BOT USERNAME HERE>>'
+SLACK_BOT_API_TOKEN = '<<ADD YOUR SLACK BOT API TOKEN HERE>>'
+CRYPT_TOKEN = 'YourCryptToken12'  # Must be exactly 16 characters in length
 
 
 def decryption():
-    return AES.new("PythonSlackBot01", AES.MODE_CFB, 'This is an IV456')
+    return AES.new(CRYPT_TOKEN, AES.MODE_CFB, 'This is an IV456')
 
 
 def friendly_time(seconds, granularity=3):
