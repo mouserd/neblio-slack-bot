@@ -157,7 +157,7 @@ if slack_client.rtm_connect():
                         with open('/etc/neb.conf', 'r') as f:
                             phrase = f.read()
 
-                        send_slack_response("OK, trying to unlock your wallet now. This could take a while... "
+                        send_slack_response("OK, trying to unlock your wallet now. This may take a moment... "
                                             "please hold :telephone_receiver:", message['channel'])
                         subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase), shell=True)
                         attempt = 0
@@ -266,7 +266,7 @@ if slack_client.rtm_connect():
 
                         send_slack_response("My disk is at *%s%%* of capacity.\n%s" % (disk_pct, disk_detail), message_channel)
 
-                    elif re.match(r'.*(hello|hey|hi).*', message_text, re.IGNORECASE):
+                    elif re.match(r'.*(hello|hey|hi|has joined the channel|has joined the group).*', message_text, re.IGNORECASE):
                         send_slack_response("Hellllo! And how are you?", message_channel)
 
                     elif re.match(r'.*(bye).*', message_text, re.IGNORECASE):
