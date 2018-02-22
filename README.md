@@ -33,8 +33,9 @@ Using the SlackBot you can perform the following functions:
 
 ### Slack
 
-This project requires a private Slack instance, after all, you don't really want 
-someone else being able to control and view details about your raspberry Pi and Neblio wallet.  
+This project requires a *PRIVATE* Slack instance, after all, *you really don't want 
+someone else being able to control and view details about your raspberry Pi and Neblio wallet*.
+  
 To setup your private Slack, simply:
 
 1. Follow the instructions to create your very own Slack workspace: [https://slack.com/create](https://slack.com/create)
@@ -93,4 +94,16 @@ And add the following to the bottom of your cron:
 
 ## Advanced - Unlocking your wallet
 
-TBC
+The following section should be done at your own risk.  By following this process your wallet 
+key will be written to a file on disk using a 2-way encryption library.  As such, if someone were 
+to hack your Raspberry Pi they could quite easily gain access to your neblio wallet.  As such, if you
+feel uncomfortable with this risk or your Raspberry Pi is exposed to the outside world then you should 
+consider only unlocking your neblio wallet manually.
+
+At the end of the day you should consider the risk here akin to having your Facebook or Twitter on your mobile phone.  
+If someone was able to bypass your phones password they would have access to similarly sensitive information.
+
+Now, that the mandatory warning is out of the way, if you'd like to be able to unlock your wallet 
+using the slack bot you need to:
+
+1.
