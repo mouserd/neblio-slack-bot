@@ -20,10 +20,10 @@ Using the SlackBot you can perform the following functions:
     * Uptime
     * Current IP Address
     
-<table width="80%" align="center"><tr><td>
-![Neblio Slack Bot](https://github.com/mouserd/neblio-slack-bot/blob/master/assets/neblio-slack-bot.gif "Neblio Slack Bot")
-</td></tr></table>
-   
+<table><tr><td>
+<img src="https://github.com/mouserd/neblio-slack-bot/blob/master/assets/neblio-slack-bot.gif" 
+    title="Neblio Slack Bot" alt="Neblio Slack Bot" />
+<table><tr><td>
 ## Pre-requisites
 
 ### Slack
