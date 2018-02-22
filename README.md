@@ -1,3 +1,7 @@
+<style>
+  #neblio-slack-bot-demo td { padding: 0 !important; }
+</style>
+
 # Neblio Slack Bot
 
 This project allows you to manage and query your Neblio Wallet installed on a Raspberry Pi via SlackBot.
@@ -20,11 +24,11 @@ Using the SlackBot you can perform the following functions:
     * Uptime
     * Current IP Address
     
-<table width="60%" align="center">
+<table width="60%" align="center" padding=0 margin=0 id="neblio-slack-bot-demo">
     <tr>
         <td style="padding:0">
             <img src="https://github.com/mouserd/neblio-slack-bot/blob/master/assets/neblio-slack-bot.gif" 
-                title="Neblio Slack Bot" alt="Neblio Slack Bot" />
+                title="Neblio Slack Bot" alt="Neblio Slack Bot" max-width="520" />
         </td>
     </tr>
 </table>
