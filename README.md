@@ -28,7 +28,7 @@ Using the SlackBot you can perform the following functions:
     <tr>
         <td style="padding:0">
             <img src="https://github.com/mouserd/neblio-slack-bot/blob/master/assets/neblio-slack-bot.gif" 
-                title="Neblio Slack Bot" alt="Neblio Slack Bot" max-width="520" />
+                title="Neblio Slack Bot" alt="Neblio Slack Bot" width="520" />
         </td>
     </tr>
 </table>
