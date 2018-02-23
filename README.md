@@ -110,4 +110,14 @@ If someone was able to bypass your phones password they would have access to sim
 Now, that the mandatory warning is out of the way, if you'd like to be able to unlock your wallet 
 using the slack bot you need to:
 
-1.
+1. Copy the `crypt-wallet-phasephrase.ph` to your `/home/pi/` directory
+2. Run the copied script as root using `sudo`, this will by write your encrypted passphrase using salt `CRYPT_TOKEN` and will write the result
+to the `CRYPT_PASSPHRASE_PATH` (by default `/etc/neb.conf`).  Both of these values can be changed in the `config.py` to one of your own choice:
+```
+  sudo python /home/pi/crypt-wallet-passphrase.py
+```
+3. The script will prompt you to enter your wallet phassphrase and will then write the encrypted result to the `CRYPT_PASSPHRASE_PATH` defined in
+`config.py` (`/etc/neb.conf` by default)
+4. In slack, now ask your pi-bot to "unlock wallet" and with any luck you'll receive a confirmation response that your wallet was unlocked
+
+You can also lock your wallet with a simple "lock wallet" command to your slack bot. 
