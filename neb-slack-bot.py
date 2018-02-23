@@ -168,7 +168,8 @@ if connected:
                                          "Your weight is *%s*. I estimate you'll get your next stake in about *%s*." \
                                          % (neb_staking_info['weight'], friendly_time(neb_staking_info['expectedtime'])) \
                             if neb_staking_info['staking'] is True \
-                            else "Sorry, I wasn't able to unlock your wallet... you may have to take over."
+                            else "Sorry, I wasn't able to unlock your wallet... you may have to take over.  " \
+                                 "Make sure your wallet passphrase is correct and that the neblio daemon is running."
 
                         send_slack_response(slack_response, message_channel)
 
