@@ -67,12 +67,12 @@ sudo pip install crypto
 
 ## Installation <a name="installation"></a>
 
-Once you have satisfied the pre-requisites, simply copy the `neb-slack-bot.py` script
-to your `pi` users home directory.  Edit the Python script and replace the `<<ADD YOUR SLACK BOT API TOKEN HERE>>` with the 
+Once you have satisfied the pre-requisites, simply copy both the `neb-slack-bot.py` and `config.py` scripts
+to your `pi` users home directory.  Edit the `config.py` python script and replace the `<<ADD YOUR SLACK BOT API TOKEN HERE>>` with the 
 token you generated for your Slack workspace.  Replace the `<<ADD YOUR SLACK BOT USERNAME HERE>>` with the name you have given
 to your Slack Bot.
 
-To test that your Neblio Slack Bot is working, start the python script using:
+To test that your Neblio Slack Bot is working, start the main python script using:
 
 ```
 python /home/pi/neb-slack-bot.py

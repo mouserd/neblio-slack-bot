@@ -1,0 +1,3 @@
+SLACK_BOT_USER_NAME = '<<ADD YOUR SLACK BOT USERNAME HERE>>'
+SLACK_BOT_API_TOKEN = '<<ADD YOUR SLACK BOT API TOKEN HERE>>'
+CRYPT_TOKEN = 'YourCryptToken12'  # Must be exactly 16 characters in length

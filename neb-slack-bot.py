@@ -6,6 +6,7 @@ import subprocess
 import sys
 import time
 import traceback
+import config
 from Crypto.Cipher import AES
 from hurry.filesize import si
 from hurry.filesize import size
@@ -15,13 +16,9 @@ logging.basicConfig(filename='/var/log/neb/slack-bot.log',
                     format='%(asctime)s: [%(levelname)s] %(message)s',
                     level=logging.INFO)
 
-SLACK_BOT_USER_NAME = '<<ADD YOUR SLACK BOT USERNAME HERE>>'
-SLACK_BOT_API_TOKEN = '<<ADD YOUR SLACK BOT API TOKEN HERE>>'
-CRYPT_TOKEN = 'YourCryptToken12'  # Must be exactly 16 characters in length
-
 
 def decryption():
-    return AES.new(CRYPT_TOKEN, AES.MODE_CFB, 'This is an IV456')
+    return AES.new(config.CRYPT_TOKEN, AES.MODE_CFB, 'This is an IV456')
 
 
 def friendly_time(seconds, granularity=3):
@@ -107,12 +104,11 @@ delay_startup = float(sys.argv[1]) if len(sys.argv) > 1 else 0
 logging.info("Starting up in %d secs" % delay_startup)
 time.sleep(delay_startup)
 
-slack_client = SlackClient(SLACK_BOT_API_TOKEN)
-slack_user_id = fetch_slack_user_id(SLACK_BOT_USER_NAME)
+slack_client = SlackClient(config.SLACK_BOT_API_TOKEN)
+slack_user_id = fetch_slack_user_id(config.SLACK_BOT_USER_NAME)
+connected = slack_client.rtm_connect()
 
-
-# Initiate a slack connection and wait for messages
-if slack_client.rtm_connect():
+if connected:
     logging.info("Successfully connected to Slack. Waiting for messages...")
     send_slack_online_message("Heya! I'm back online, you should ask me some stuff...")
 
