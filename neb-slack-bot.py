@@ -150,7 +150,7 @@ if connected:
                         send_slack_response(slack_response, message_channel)
 
                     elif re.match(r'.*(unlock).*(wallet).*', message_text, re.IGNORECASE):
-                        with open('/etc/neb.conf', 'r') as f:
+                        with open(config.CRYPT_PASSPHRASE_PATH, 'r') as f:
                             phrase = f.read()
 
                         send_slack_response("OK, trying to unlock your wallet now. This may take a moment... "
