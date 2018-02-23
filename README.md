@@ -1,6 +1,3 @@
-<style>
-  #neblio-slack-bot-demo td { padding: 0 !important; }
-</style>
 
 # Neblio Slack Bot
 
@@ -102,22 +99,22 @@ And add the following to the bottom of your cron:
 key will be written to a file on disk using a 2-way encryption library.  As such, if someone were 
 to hack your Raspberry Pi they could quite easily gain access to your neblio wallet.  As such, if you
 feel uncomfortable with this risk or your Raspberry Pi is exposed to the outside world then you should 
-consider only unlocking your neblio wallet manually.
+consider only unlocking your neblio wallet **manually**.
 
 At the end of the day you should consider the risk here akin to having your Facebook or Twitter on your mobile phone.  
-If someone was able to bypass your phones password they would have access to similarly sensitive information.
+If someone was able to bypass your phones' password they would have access to similarly sensitive information.
 
 Now, that the mandatory warning is out of the way, if you'd like to be able to unlock your wallet 
 using the slack bot you need to:
 
-1. Copy the `crypt-wallet-phasephrase.ph` to your `/home/pi/` directory
-2. Run the copied script as root using `sudo`, this will by write your encrypted passphrase using salt `CRYPT_TOKEN` and will write the result
-to the `CRYPT_PASSPHRASE_PATH` (by default `/etc/neb.conf`).  Both of these values can be changed in the `config.py` to one of your own choice:
+1. Copy the `crypt-wallet-phasephrase.ph` to your Raspberry Pi's `/home/pi/` directory
+2. Run the copied script as root using `sudo`, this will by write your encrypted passphrase using the salt `CRYPT_TOKEN` to path `CRYPT_PASSPHRASE_PATH` 
+(by default `/etc/neb.conf`) defined in the `config.py` - feel free to change these to suit your needs!
 ```
   sudo python /home/pi/crypt-wallet-passphrase.py
 ```
-3. The script will prompt you to enter your wallet phassphrase and will then write the encrypted result to the `CRYPT_PASSPHRASE_PATH` defined in
-`config.py` (`/etc/neb.conf` by default)
+3. The script will prompt you to enter your wallet passphrase and will then write the encrypted result to the `CRYPT_PASSPHRASE_PATH` defined in
+`config.py` (`/etc/neb.conf` by default) and will make it read-only to the `pi` user.
 4. In slack, now ask your pi-bot to "unlock wallet" and with any luck you'll receive a confirmation response that your wallet was unlocked
 
 You can also lock your wallet with a simple "lock wallet" command to your slack bot. 
