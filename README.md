@@ -1,7 +1,7 @@
 
 # Neblio Slack Bot
 
-This project allows you to manage and query your Neblio Wallet installed on a Raspberry Pi via SlackBot.
+This project allows you to manage and query your [Neblio](https://nebl.io) Wallet installed on a Raspberry Pi via SlackBot.
 Using the SlackBot you can perform the following functions:
 
 * Determine if the Neblio daemon is running
@@ -154,3 +154,13 @@ or just issue the keywords alone.  The following are the keywords that the nebli
 | `hello`                     | Greet Pi bot! |
 | `bye`                       | Farewell Pi bot! |
 | `when moon`                 | Tells you when you should expect neblio to moon! |
+
+## Donate / Tip
+
+I hope you've found the **Neblio Slack Bot** useful!  If you'd like to donate or tip to assist with the cost of building and maintaining 
+this project then it would be much appreciated.
+
+Neblio Address: ﻿`NbmG8tDpXVvjjac4UAmtsuitFAHf9YHcD3`
+Ethereum Address: `0x6E644b360f314a50A8684a9E6676E13CbB702d1d` 
+
+
