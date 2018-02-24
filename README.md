@@ -151,13 +151,13 @@ or just issue the keywords alone.  The following are the keywords that the nebli
 | `running`                   | Alias for `uptime` |
 | `reboot`                    | Reboots the Pi (the bot should come online automatically providing you've setup the cron from the [installation](#installation) instructions |
 | `restart`                   | Alias for `reboot` |
-| `hello`                     | Greet Pi bot! |
-| `bye`                       | Farewell Pi bot! |
+| `hello`                     | Greet your Pi bot! |
+| `bye`                       | Farewell your Pi bot! |
 | `when moon`                 | Tells you when you should expect neblio to moon! |
 
-## Donate / Tip
+## Donate / Tip :dollar:
 
-I hope you've found the **Neblio Slack Bot** useful!  If you'd like to donate or tip to assist with the cost of building and maintaining 
+:thumbsup: I hope you've found the **Neblio Slack Bot** useful!  If you'd like to donate or tip to assist with the cost of building and maintaining 
 this project then it would be much appreciated.
 
 Neblio Address: ﻿`NbmG8tDpXVvjjac4UAmtsuitFAHf9YHcD3`
