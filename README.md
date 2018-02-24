@@ -93,7 +93,7 @@ And add the following to the bottom of your cron:
 @reboot /usr/bin/python /home/pi/scripts/neb-slack-bot.py 30 >> /var/log/neb/slack-bot.log 2>&1
 ```
 
-## Advanced - Unlocking your wallet
+## Advanced - Unlocking your wallet <a name="unlock-wallet"></a>
 
 **The following section should be followed at your own risk.**  By following this process your wallet 
 key will be written to a file on disk using a 2-way encryption library.  As such, if someone were 
@@ -118,3 +118,37 @@ using the slack bot you need to:
 4. In slack, now ask your pi-bot to "unlock wallet" and with any luck you'll receive a confirmation response that your wallet was unlocked
 
 You can also lock your wallet with a simple "lock wallet" command to your slack bot. 
+
+## Slack Bot Commands
+
+The slack bot responds to messages based on some simple keyword pattern matching. You can put these keywords into sentences and questions 
+or just issue the keywords alone.  The following are the keywords that the neblio slack bot currently supports:
+
+| Keyword(s)                  | Response                                                |
+|-----------------------------|---------------------------------------------------------|
+| `neblio running`            | Simply tells you if the neblio daemon is running or not | 
+| `neblio active`             | Alias for `neblio running` | 
+| `neblio info`               | Provides summary information including your staking status, staking weight, number of connections, etc |
+| `staking`                   | Will let you know if you wallet is unlocked for staking |
+| `unlock wallet`             | Unlocks your wallet if you've [set it up](#unlock-wallet) |
+| `lock wallet`               | Locks your wallet |
+| `how many connections`      | Reports on the number of active connections on the neblio platform |
+| `how many neblio`           | Reports the number of neblio tokens in your wallet |
+| `how many nebbles`          | Alias for `how many neblio` |
+| `cpu`                       | Reports the Pi's current CPU usage |
+| `memory`                    | Reports the Pi's current memory usage |
+| `ram`                       | Alias for `memory` |
+| `disk`                      | Reports the Pi's disk space usage |
+| `space`                     | Alias for `disk` |
+| `processes most memory`     | Reports the top 5 processes based on memory usage |
+| `processes most ram`        | Alias for `processes most memory` |
+| `processes most cpu`        | Reports the top 5 processes based on CPU usage |
+| `active processes`          | Reports the processes that are running now |
+| `ip address`                | Reports the Pi's current ip address |
+| `uptime`                    | Reports the Pi's up time |
+| `running`                   | Alias for `uptime` |
+| `reboot`                    | Reboots the Pi (the bot should come online automatically providing you've setup the cron from the [installation](#installation) instructions |
+| `restart`                   | Alias for `reboot` |
+| `hello`                     | Greet Pi bot! |
+| `bye`                       | Farewell Pi bot! |
+| `when moon`                 | Tells you when you should expect neblio to moon! |
