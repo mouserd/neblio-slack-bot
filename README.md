@@ -6,7 +6,7 @@ Using the SlackBot you can perform the following functions:
 
 * Determine if the Neblio daemon is running
 * Determine if you Neblio wallet is unlocked for staking
-* Lock and Unlock your Neblio wallet (see [Advanced](#unlock-wallet) section for how to configure your wallet passphrase)
+* Lock and Unlock your Neblio wallet (see [Advanced](#advanced---unlocking-your-wallet) section for how to configure your wallet passphrase)
 * Report on the number of tokens in your wallet
 * Report information about the Neblio network, including: 
     * Number of connections
@@ -30,7 +30,6 @@ Using the SlackBot you can perform the following functions:
     </tr>
 </table>
 
-<a name="pre-requisites"></a>
 ## Pre-requisites
 
 ### Slack
@@ -71,7 +70,6 @@ mkdir /var/log/neb
 chmod ug+rw /var/log/neb
 ```
 
-<a name="installation"></a>
 ## Installation 
 
 Once you have satisfied all of the [pre-requisites](#pre-requisites), simply copy both the `neb-slack-bot.py` and `config.py` scripts
@@ -106,7 +104,6 @@ And add the following to the bottom of the file:
 ```
 Save and exit your cron.
 
-<a name="unlock-wallet"></a>
 ## Advanced - Unlocking your wallet 
 
 **The following section should be followed at your own risk.**  By following this process your neblio wallet 
@@ -144,7 +141,7 @@ or just issue the keywords alone.  The following are the keywords that the Nebli
 | `neblio active`             | Alias for `neblio running` | 
 | `neblio info`               | Provides summary information including your staking status, staking weight, number of connections, etc |
 | `staking`                   | Will let you know if you wallet is unlocked for staking |
-| `unlock wallet`             | Unlocks your wallet if you've [set it up](#unlock-wallet) |
+| `unlock wallet`             | Unlocks your wallet if you've [set it up](#advanced---unlocking-your-wallet) |
 | `lock wallet`               | Locks your wallet |
 | `how many connections`      | Reports on the number of active connections on the neblio platform |
 | `how many neblio`           | Reports the number of neblio tokens in your wallet |
