@@ -42,6 +42,7 @@ To setup your private Slack, simply:
 
 1. Follow the instructions to create your very own Slack workspace: [https://slack.com/create](https://slack.com/create)
 2. Create a **Bot** for your new workspace using the Custom Integrations page: [https://slack.com/apps/manage/custom-integrations](https://slack.com/apps/manage/custom-integrations)
+You may have to search for "Bots" and then click "Add Configuration", this should then guide you through setting up a new bot. 
 Take note of the **Username** and **API Token** of your bot, we'll need those later (see [Installation](#installation)).
 
 ### Raspberry Pi
@@ -57,10 +58,17 @@ sudo apt-get install python-pip
 Once PIP is installed, install the following required Python libraries:
 
 ```
-sudo pip install slackweb
+sudo pip install slackclient
 sudo pip install psutil
 sudo pip install hurry.filesize
 sudo pip install crypto
+```
+
+Make a directory for the slack bot to log output to:
+
+```
+mkdir /var/log/neb
+chmod ug+rw /var/log/neb
 ```
 
 <a name="installation"></a>
