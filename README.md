@@ -62,7 +62,8 @@ sudo pip install hurry.filesize
 sudo pip install crypto
 ```
 
-## Installation <a name="installation"></a>
+<a name="installation"></a>
+## Installation 
 
 Once you have satisfied the pre-requisites, simply copy both the `neb-slack-bot.py` and `config.py` scripts
 to your `pi` users home directory.  Edit the `config.py` python script and replace the `<<ADD YOUR SLACK BOT API TOKEN HERE>>` with the 
@@ -93,7 +94,8 @@ And add the following to the bottom of your cron:
 @reboot /usr/bin/python /home/pi/scripts/neb-slack-bot.py 30 >> /var/log/neb/slack-bot.log 2>&1
 ```
 
-## Advanced - Unlocking your wallet <a name="unlock-wallet"></a>
+<a name="unlock-wallet"></a>
+## Advanced - Unlocking your wallet 
 
 **The following section should be followed at your own risk.**  By following this process your wallet 
 key will be written to a file on disk using a 2-way encryption library.  As such, if someone were 
