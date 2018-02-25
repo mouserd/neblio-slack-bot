@@ -141,16 +141,16 @@ class NeblioSlackBot:
             self.__send_response("Heya! I'm back online, you should ask me some stuff...")
 
             while True:
-                for message in self.slack_client.rtm_read():
+                try:
+                    for message in self.slack_client.rtm_read():
 
-                    if 'text' in message and self.__tagged_user_marker(self.slack_user_id) in message['text']:
+                        if 'text' in message and self.__tagged_user_marker(self.slack_user_id) in message['text']:
 
-                        logging.info("Message received: %s" % message['text'])
-                        message_text = self.__sanitize_message(message['text'])
-                        message_channel = message['channel']
-                        message_user = message['user']
+                            logging.info("Message received: %s" % message['text'])
+                            message_text = self.__sanitize_message(message['text'])
+                            message_channel = message['channel']
+                            message_user = message['user']
 
-                        try:
                             if len(self.allowed_users) > 0 and message_user not in self.allowed_users:
                                 logging.info("Un authorised user: %s" % message_user)
                                 self.__send_response("Un-authorised User! Please do not talk to me. Scum.", message_channel)
@@ -315,15 +315,12 @@ class NeblioSlackBot:
                             else:
                                 self.__send_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
 
-                        except Exception as e:
-                            self.__send_response(":fire: :fire: :fire:\n :fire: Oh no!  I just crashed! (%s: %s)\n:fire: :fire: :fire:"
-                                                 % (e.__doc__, e.__cause__), message_channel)
-                            logging.error(traceback.format_exc())
-
-                            logging.warning("Retrying connection in 10 seconds")
-                            time.sleep(10)
-                            self.connect()
-                            self.listen()
+                except Exception as e:
+                    logging.error(traceback.format_exc())
+                    logging.warning("Retrying connection in 10 seconds")
+                    time.sleep(10)
+                    self.connect()
+                    self.__send_response(":fire: :fire: :fire:\n :fire: Oh no!  I just crashed! (%s)\n:fire: :fire: :fire:" % e.__doc__)
 
                 time.sleep(1)
 
