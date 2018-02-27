@@ -63,13 +63,6 @@ sudo pip install hurry.filesize
 sudo pip install crypto
 ```
 
-Make a directory for the slack bot to log output to:
-
-```
-sudo mkdir /var/log/neb
-sudo chown pi /var/log/neb
-sudo chmod u+rw /var/log/neb
-```
 
 ## Installation 
 

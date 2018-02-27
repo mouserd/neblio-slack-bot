@@ -5,7 +5,6 @@ import subprocess
 import sys
 import time
 import traceback
-
 import psutil
 from Crypto.Cipher import AES
 from hurry.filesize import si
@@ -14,9 +13,9 @@ from slackclient import SlackClient
 
 import config
 
-logging.basicConfig(filename='/var/log/neb/slack-bot.log',
+logging.basicConfig(filename='%s/slack-bot.log' % config.LOG_PATH,
                     format='%(asctime)s: [%(levelname)s] %(message)s',
-                    level=logging.INFO)
+                    level=config.LOG_LEVEL)
 
 
 def decryption():
@@ -72,6 +71,7 @@ def get_neblio_staking_info():
 def get_neblio_info():
     return json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
 
+
 # When starting from reboot we need to delay as we might not have a network connection yet!
 delay_startup = float(sys.argv[1]) if len(sys.argv) > 1 else 0
 logging.info("Starting up in %d secs" % delay_startup)
@@ -92,7 +92,7 @@ class NeblioSlackBot:
             if user.get('name') == username:
                 return user.get('id')
 
-    def __send_response(self, response_message, channel="#pi"):
+    def __send_response(self, response_message, channel=config.DEFAULT_CHANNEL):
         self.slack_client.api_call("chat.postMessage", channel=channel, text=response_message, as_user=True)
 
     def __tagged_user_marker(self, user_id):
