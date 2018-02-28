@@ -34,7 +34,7 @@ Using the SlackBot you can perform the following functions:
 
 ### Slack
 
-**UPDATE: 28/02/17:** This project no longer requires that you have a **PRIVATE** Slack workspace, instead you can now
+**UPDATE: 28/02/18:** This project no longer requires that you have a **PRIVATE** Slack workspace, instead you can now
 restrict the slack channels and users that the Neblio Slack Bot can interact with. Choose one of the following two Slack setups that best meet your
 needs.
 
