@@ -34,15 +34,34 @@ Using the SlackBot you can perform the following functions:
 
 ### Slack
 
-This project requires a **PRIVATE** Slack instance, after all, **you really don't want 
-someone else being able to control and view details about your raspberry Pi and Neblio wallet**.
-  
-To setup your private Slack, simply:
+**UPDATE: 28/02/17:** This project no longer requires that you have a **PRIVATE** Slack workspace, instead you can now
+restrict the slack channels and users that the Neblio Slack Bot can interact with. Choose one of the following two Slack setups that best meet your
+needs.
+
+#### Using a PRIVATE (dedicated) Slack workspace
+
+This setup uses a **PRIVATE** Slack instance that only you will have access to.  This method is probably more secure as you will be the only
+  person with access to the workspace, but it does require a bit more effort to register a new Slack workspace.  To setup your private Slack, simply:
 
 1. Follow the instructions to create your very own Slack workspace: [https://slack.com/create](https://slack.com/create)
 2. Create a **Bot** for your new workspace using the Custom Integrations page: [https://slack.com/apps/manage/custom-integrations](https://slack.com/apps/manage/custom-integrations)
 You may have to search for "Bots" and then click "Add Configuration", this should then guide you through setting up a new bot. 
 Take note of the **Username** and **API Token** of your bot, we'll need those later (see [Installation](#installation)).
+
+#### Using a PUBLIC (shared) Slack workspace
+
+If you already have your own Slack instance that you share with friends and family you can still integrate your Neblio Slack Bot simply by:
+
+1. Create a **Bot** for your existing workspace using the Custom Integrations page: [https://slack.com/apps/manage/custom-integrations](https://slack.com/apps/manage/custom-integrations)
+   You may have to search for "Bots" and then click "Add Configuration", this should then guide you through setting up a new bot. 
+   Take note of the **Username** and **API Token** of your bot, we'll need those later (see [Installation](#installation)).
+2. In the [Installation](#installation) steps you will need to copy the `config.py` from this repository onto your Raspberry Pi.  When you've copied
+this file, edit the file changing the two lines below to only allow interaction with the bot to the channels
+and/or users of your choosing:
+```
+ALLOWED_CHANNELS = ['my-private-channel']     # optional list of channels users can talk to your bot from
+ALLOWED_USERS = ['my-slack-user-id']          # optional list of users who are permitted to talk to your bot
+```
 
 ### Raspberry Pi
 This project uses Python, so you will need to ensure that this is available on your Raspberry Pi.  This was 
@@ -131,6 +150,7 @@ or just issue the keywords alone.  The following are the keywords that the Nebli
 
 | Keyword(s)                  | Response                                                |
 |-----------------------------|---------------------------------------------------------|
+| `help`                      | List available commands                                 |
 | `neblio running`            | Simply tells you if the neblio daemon is running or not | 
 | `neblio active`             | Alias for `neblio running` | 
 | `neblio info`               | Provides summary information including your staking status, staking weight, number of connections, etc |

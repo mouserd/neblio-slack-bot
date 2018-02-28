@@ -312,6 +312,26 @@ class NeblioSlackBot:
                             elif self.__matches_pattern('.*(when moon).*', message_text):
                                 self.__send_response("SOON! :rocket: :crescent_moon:", message_channel)
 
+                            elif self.__matches_pattern('.*(help).*', message_text):
+                                slack_response = "Available Commands:\n" \
+                                                 "    > neblio info\n" \
+                                                 "    > neblio active\n" \
+                                                 "    > staking\n" \
+                                                 "    > unlock wallet\n" \
+                                                 "    > lock wallet\n" \
+                                                 "    > how many connections\n" \
+                                                 "    > how many neblio\n" \
+                                                 "    > processes most ram\n" \
+                                                 "    > processes most cpu\n" \
+                                                 "    > active processes\n" \
+                                                 "    > ip address\n" \
+                                                 "    > uptime\n" \
+                                                 "    > reboot\n" \
+                                                 "    > cpu\n" \
+                                                 "    > memory\n" \
+                                                 "    > disk\n"
+                                self.__send_response(slack_response, message_channel)
+
                             else:
                                 self.__send_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
 
