@@ -82,6 +82,12 @@ sudo pip install hurry.filesize
 sudo pip install crypto
 ```
 
+We also need a utility called [jq](https://stedolan.github.io/jq/) which is command-line tool for parsing and querying json:
+
+```
+sudo apt-get install jq
+```
+
 
 ## Installation 
 
