@@ -117,11 +117,11 @@ do this, edit your cron using:
 
 ```crontab -e```
 
-And add the following to the bottom of the file:
+And add the following to the bottom of the file, making sure to leave a blank line at the end:
 ```
 @reboot /usr/bin/python /home/pi/scripts/neb-slack-bot.py 30 >> /var/log/neb/slack-bot.log 2>&1
 ```
-Save and exit your cron.
+Save and exit your cron (Ctrl+X if using nano).
 
 ## Advanced - Unlocking your wallet 
 
