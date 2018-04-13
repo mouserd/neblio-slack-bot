@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 import traceback
+from websocket import WebSocketConnectionClosedException
 import psutil
 from Crypto.Cipher import AES
 from hurry.filesize import si
@@ -335,12 +336,15 @@ class NeblioSlackBot:
                             else:
                                 self.__send_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
 
+                except (WebSocketConnectionClosedException, ConnectionError):
+                    logging.error(traceback.format_exc())
+                    logging.warning("Connection lost. Attempting to reconnect in 30 seconds")
+                    time.sleep(30)
+                    self.__send_response("FYI - I'm back online after some momentary network connection problems!")
                 except Exception as e:
                     logging.error(traceback.format_exc())
-                    logging.warning("Retrying connection in 10 seconds")
-                    time.sleep(10)
-                    self.connect()
-                    self.__send_response(":fire: :fire: :fire:\n :fire: Oh no!  I just crashed! (%s)\n:fire: :fire: :fire:" % e.__doc__)
+                    self.__send_response(":fire: :fire: :fire:\n :fire: Oh no!  I just crashed! (%s: %s)\n:fire: :fire: :fire:"
+                                         % (e.__doc__, e.__cause__))
 
                 time.sleep(1)
 
