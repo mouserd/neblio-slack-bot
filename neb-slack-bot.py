@@ -79,9 +79,9 @@ def get_neblio_transactions():
 
 
 def get_neblio_addresses():
-    neb_address_group = json.loads(subprocess.check_output("/home/pi/nebliod listaddressgroupings | jq .", shell=True).strip())
+    neb_address_groups = json.loads(subprocess.check_output("/home/pi/nebliod listaddressgroupings | jq .", shell=True).strip())
     neb_named_addresses = []
-    for group in neb_address_group:
+    for group in neb_address_groups:
         neb_named_addresses.append(filter(lambda address_group: len(address_group) == 3, group)[0])
     return map(lambda account: ({'address': account[0], 'name': account[2]}), list(neb_named_addresses))
 
@@ -265,7 +265,8 @@ class NeblioSlackBot:
                                     "  %s, %s: *%s* %s\n" % (time.strftime('%x', time.localtime(p['timereceived'])),
                                                              neb_transaction_type(p['category']),
                                                              p['amount'],
-                                                             "(%s)" % p['account'] if p['account'] != '' else '') for p in neb_addresses)
+                                                             "(%s)" % p['account'] if p['account'] != '' else '')
+                                    for p in reversed(neb_addresses))
                                 slack_response = "Here are your last *%s* neblio transactions:\n%s" % \
                                                  (len(neb_addresses), neb_transactions_detail)
                                 self.__send_response(slack_response, message_channel)
@@ -389,9 +390,9 @@ class NeblioSlackBot:
                     time.sleep(30)
                     self.__send_response("FYI - I'm back online after some momentary network connection problems!")
                 except Exception as e:
+                    logging.error(e)
                     logging.error(traceback.format_exc())
-                    self.__send_response(":fire: :fire: :fire:\n :fire: Oh no!  I just crashed! (%s: %s)\n:fire: :fire: :fire:"
-                                         % (e.__doc__, e.__cause__))
+                    self.__send_response(":fire: Oh no!  I just crashed! (%s: %s)" % (e.__doc__, e))
 
                 time.sleep(1)
 
