@@ -32,6 +32,10 @@ Using the SlackBot you can perform the following functions:
 
 ## Pre-requisites
 
+### Neblio
+This project requires the `nebliod` wallet to be already installed on your Raspberry Pi.  This can be found on the 
+[official Neblio github](https://github.com/NeblioTeam/NEBL-Pi/releases).
+
 ### Slack
 
 **UPDATE: 28/02/18:** This project no longer requires that you have a **PRIVATE** Slack workspace, instead you can now
