@@ -78,6 +78,14 @@ def get_neblio_transactions():
     return json.loads(subprocess.check_output("/home/pi/nebliod listtransactions | jq .", shell=True).strip())
 
 
+def get_neblio_addresses():
+    neb_address_group = json.loads(subprocess.check_output("/home/pi/nebliod listaddressgroupings | jq .", shell=True).strip())
+    neb_named_addresses = []
+    for group in neb_address_group:
+        neb_named_addresses.append(filter(lambda address_group: len(address_group) == 3, group)[0])
+    return map(lambda account: ({'address': account[0], 'name': account[2]}), list(neb_named_addresses))
+
+
 def neb_transaction_type(category):
     if category == "receive":
         return "Received"
@@ -243,15 +251,23 @@ class NeblioSlackBot:
 
                                 self.__send_response(slack_response, message_channel)
 
+                            elif self.__matches_pattern('.*(neblio).*(address).*', message_text):
+                                neb_addresses = get_neblio_addresses()
+                                neb_addresses_detail = "".join("  %d. *%s*: %s\n    (http://explorer.nebl.io/address/%s)\n"
+                                                               % (i + 1, address['name'], address['address'], address['address'])
+                                                               for i, address in enumerate(neb_addresses))
+                                slack_response = "Here are your neblio addresses:\n%s" % neb_addresses_detail
+                                self.__send_response(slack_response, message_channel)
+
                             elif self.__matches_pattern('.*(neblio).*(transactions).*', message_text):
-                                neb_transactions = get_neblio_transactions()
+                                neb_addresses = get_neblio_transactions()
                                 neb_transactions_detail = "".join(
                                     "  %s, %s: *%s* %s\n" % (time.strftime('%x', time.localtime(p['timereceived'])),
-                                                               neb_transaction_type(p['category']),
-                                                               p['amount'],
-                                                               "(%s)" % p['account'] if p['account'] != '' else '') for p in neb_transactions)
+                                                             neb_transaction_type(p['category']),
+                                                             p['amount'],
+                                                             "(%s)" % p['account'] if p['account'] != '' else '') for p in neb_addresses)
                                 slack_response = "Here are your last *%s* neblio transactions:\n%s" % \
-                                                 (len(neb_transactions), neb_transactions_detail)
+                                                 (len(neb_addresses), neb_transactions_detail)
                                 self.__send_response(slack_response, message_channel)
 
                             elif self.__matches_pattern('.*(neblio).*(running|active).*', message_text):
@@ -346,6 +362,7 @@ class NeblioSlackBot:
                                 slack_response = "Available Commands:\n" \
                                                  "    > neblio info\n" \
                                                  "    > neblio active\n" \
+                                                 "    > neblio addresses\n" \
                                                  "    > neblio transactions\n" \
                                                  "    > staking\n" \
                                                  "    > unlock wallet\n" \

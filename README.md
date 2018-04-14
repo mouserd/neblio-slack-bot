@@ -164,6 +164,7 @@ or just issue the keywords alone.  The following are the keywords that the Nebli
 | `neblio running`            | Simply tells you if the neblio daemon is running or not | 
 | `neblio active`             | Alias for `neblio running` | 
 | `neblio info`               | Provides summary information including your staking status, staking weight, number of connections, etc |
+| `neblio addresses`          | Lists your neblio addresses and provides a link to view them on the [Neblio Block Explorer](http://explorer.nebl.io)|
 | `neblio transactions`       | Lists details about your last 10 neblio transactions    |
 | `staking`                   | Will let you know if you wallet is unlocked for staking |
 | `unlock wallet`             | Unlocks your wallet if you've [set it up](#advanced---unlocking-your-wallet) |
