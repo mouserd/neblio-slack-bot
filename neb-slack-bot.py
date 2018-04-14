@@ -79,11 +79,7 @@ def get_neblio_transactions():
 
 
 def get_neblio_addresses():
-    neb_address_groups = json.loads(subprocess.check_output("/home/pi/nebliod listaddressgroupings | jq .", shell=True).strip())
-    neb_named_addresses = []
-    for group in neb_address_groups:
-        neb_named_addresses.append(filter(lambda address_group: len(address_group) == 3, group)[0])
-    return map(lambda account: ({'address': account[0], 'name': account[2]}), list(neb_named_addresses))
+    return json.loads(subprocess.check_output("/home/pi/nebliod listreceivedbyaddress 1 true | jq .", shell=True).strip())
 
 
 def neb_transaction_type(category):
@@ -253,8 +249,9 @@ class NeblioSlackBot:
 
                             elif self.__matches_pattern('.*(neblio).*(address).*', message_text):
                                 neb_addresses = get_neblio_addresses()
-                                neb_addresses_detail = "".join("  %d. *%s*: %s\n    (http://explorer.nebl.io/address/%s)\n"
-                                                               % (i + 1, address['name'], address['address'], address['address'])
+                                neb_addresses_detail = "".join("  %d. *%s*: %s\n"
+                                                               "    (http://explorer.nebl.io/address/%s)\n"
+                                                               % (i + 1, address['account'], address['address'], address['address'])
                                                                for i, address in enumerate(neb_addresses))
                                 slack_response = "Here are your neblio addresses:\n%s" % neb_addresses_detail
                                 self.__send_response(slack_response, message_channel)
