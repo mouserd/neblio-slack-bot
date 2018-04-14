@@ -67,19 +67,19 @@ def get_processes_sorted_by_cpu():
 
 
 def get_neblio_staking_info():
-    return json.loads(subprocess.check_output("/home/pi/nebliod getstakinginfo | jq .", shell=True).strip())
+    return json.loads(subprocess.check_output("%s getstakinginfo | jq ." % config.NEB_WALLET_EXEC_PATH, shell=True).strip())
 
 
 def get_neblio_info():
-    return json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
+    return json.loads(subprocess.check_output("%s getinfo | jq ." % config.NEB_WALLET_EXEC_PATH, shell=True).strip())
 
 
 def get_neblio_transactions():
-    return json.loads(subprocess.check_output("/home/pi/nebliod listtransactions | jq .", shell=True).strip())
+    return json.loads(subprocess.check_output("%s listtransactions | jq ." % config.NEB_WALLET_EXEC_PATH, shell=True).strip())
 
 
 def get_neblio_addresses():
-    return json.loads(subprocess.check_output("/home/pi/nebliod listreceivedbyaddress 1 true | jq .", shell=True).strip())
+    return json.loads(subprocess.check_output("%s listreceivedbyaddress 1 true | jq ." % config.NEB_WALLET_EXEC_PATH, shell=True).strip())
 
 
 def neb_transaction_type(category):
@@ -212,8 +212,8 @@ class NeblioSlackBot:
 
                                 self.__send_response("OK, trying to unlock your wallet now. This may take a moment... "
                                                      "please hold :telephone_receiver:", message['channel'])
-                                subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase),
-                                                shell=True)
+                                subprocess.call("%s walletpassphrase %s 31000000 true" %
+                                                (config.NEB_WALLET_EXEC_PATH, decryption().decrypt(phrase)), shell=True)
                                 attempt = 0
                                 while attempt < 10:
                                     neb_staking_info = get_neblio_staking_info()
@@ -232,7 +232,7 @@ class NeblioSlackBot:
                                 self.__send_response(slack_response, message_channel)
 
                             elif self.__matches_pattern('.*(lock).*(wallet).*', message_text):
-                                subprocess.call("/home/pi/nebliod walletlock", shell=True)
+                                subprocess.call("%s walletlock" % config.NEB_WALLET_EXEC_PATH, shell=True)
                                 self.__send_response("OK, I've locked your wallet and I'm no longer staking!\n", message_channel)
 
                             elif self.__matches_pattern('.*(how many).*(connections).*', message_text):

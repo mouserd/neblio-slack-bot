@@ -12,3 +12,5 @@ ALLOWED_USERS = []          # optional list of users who are permitted to talk t
 
 LOG_PATH = '/home/pi'       # default path where logs are written, path needs to be writable by the 'pi' user
 LOG_LEVEL = logging.INFO
+
+NEB_WALLET_EXEC_PATH = "/home/pi/nebliod"   # path to the neblio executable - might need to change this if using neblio-QT?
