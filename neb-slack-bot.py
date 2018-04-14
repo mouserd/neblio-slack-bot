@@ -2,15 +2,16 @@ import json
 import logging
 import re
 import subprocess
+import traceback
+
+import psutil
 import sys
 import time
-import traceback
-from websocket import WebSocketConnectionClosedException
-import psutil
 from Crypto.Cipher import AES
 from hurry.filesize import si
 from hurry.filesize import size
 from slackclient import SlackClient
+from websocket import WebSocketConnectionClosedException
 
 import config
 
@@ -73,6 +74,21 @@ def get_neblio_info():
     return json.loads(subprocess.check_output("/home/pi/nebliod getinfo | jq .", shell=True).strip())
 
 
+def get_neblio_transactions():
+    return json.loads(subprocess.check_output("/home/pi/nebliod listtransactions | jq .", shell=True).strip())
+
+
+def neb_transaction_type(category):
+    if category == "receive":
+        return "Received"
+    elif category == "send":
+        return "Sent"
+    elif category == "generate":
+        return "Staked"
+    else:
+        return category
+
+
 # When starting from reboot we need to delay as we might not have a network connection yet!
 delay_startup = float(sys.argv[1]) if len(sys.argv) > 1 else 0
 logging.info("Starting up in %d secs" % delay_startup)
@@ -80,7 +96,6 @@ time.sleep(delay_startup)
 
 
 class NeblioSlackBot:
-
     slack_client = None
     slack_user_id = None
     connected = False
@@ -192,8 +207,9 @@ class NeblioSlackBot:
                                     phrase = f.read()
 
                                 self.__send_response("OK, trying to unlock your wallet now. This may take a moment... "
-                                                         "please hold :telephone_receiver:", message['channel'])
-                                subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase), shell=True)
+                                                     "please hold :telephone_receiver:", message['channel'])
+                                subprocess.call("/home/pi/nebliod walletpassphrase %s 31000000 true" % decryption().decrypt(phrase),
+                                                shell=True)
                                 attempt = 0
                                 while attempt < 10:
                                     neb_staking_info = get_neblio_staking_info()
@@ -227,6 +243,17 @@ class NeblioSlackBot:
 
                                 self.__send_response(slack_response, message_channel)
 
+                            elif self.__matches_pattern('.*(neblio).*(transactions).*', message_text):
+                                neb_transactions = get_neblio_transactions()
+                                neb_transactions_detail = "".join(
+                                    "  %s, %s: *%s* %s\n" % (time.strftime('%x', time.localtime(p['timereceived'])),
+                                                               neb_transaction_type(p['category']),
+                                                               p['amount'],
+                                                               "(%s)" % p['account'] if p['account'] != '' else '') for p in neb_transactions)
+                                slack_response = "Here are your last *%s* neblio transactions:\n%s" % \
+                                                 (len(neb_transactions), neb_transactions_detail)
+                                self.__send_response(slack_response, message_channel)
+
                             elif self.__matches_pattern('.*(neblio).*(running|active).*', message_text):
                                 neb_is_running = len(find_process_by_name("nebliod")) > 0
                                 slack_response = "Yep, it sure is!" if neb_is_running else "It doesn't appear to be."
@@ -246,9 +273,10 @@ class NeblioSlackBot:
                             elif self.__matches_pattern('.*(processes).*(most cpu).*', message_text):
                                 top_processes_cpu = reversed([(p.pid, p.info, sum(p.info['cpu_times']))
                                                               for p in get_processes_sorted_by_cpu()][-5:])
-                                slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n"\
+                                slack_response = "These are my *top 5* processes using the most CPU:\n%s" % "\n" \
                                     .join("  %s. *%s*,  %s (pid: %s)" % (idx + 1, p[1]['name'],
-                                                                         friendly_time(p[2]), p[0]) for idx, p in enumerate(top_processes_cpu)) \
+                                                                         friendly_time(p[2]), p[0]) for idx, p in
+                                          enumerate(top_processes_cpu)) \
                                     if top_processes_cpu is not None \
                                     else "Well this is embarrassing... I couldn't work that out!"
 
@@ -256,7 +284,7 @@ class NeblioSlackBot:
 
                             elif self.__matches_pattern('.*(active processes|running processes).*', message_text):
                                 active_processes = get_processes_running_now()
-                                slack_response = "I have these *active* processes running:\n%s" % "\n"\
+                                slack_response = "I have these *active* processes running:\n%s" % "\n" \
                                     .join("  %s. *%s* (pid: %s)" % (idx + 1, p[1], p[0]) for idx, p in enumerate(active_processes)) \
                                     if active_processes is not None \
                                     else "There are no processes running at the moment."
@@ -290,7 +318,8 @@ class NeblioSlackBot:
                                                                                                size(mem.free, system=si),
                                                                                                size(mem.used, system=si))
 
-                                self.__send_response("I am using *%s%%* of available free memory.\n%s" % (mem_pct, mem_detail), message_channel)
+                                self.__send_response("I am using *%s%%* of available free memory.\n%s" % (mem_pct, mem_detail),
+                                                     message_channel)
 
                             elif self.__matches_pattern('.*(disk|space).*', message_text):
                                 disk = psutil.disk_usage('/')
@@ -317,6 +346,7 @@ class NeblioSlackBot:
                                 slack_response = "Available Commands:\n" \
                                                  "    > neblio info\n" \
                                                  "    > neblio active\n" \
+                                                 "    > neblio transactions\n" \
                                                  "    > staking\n" \
                                                  "    > unlock wallet\n" \
                                                  "    > lock wallet\n" \
@@ -336,7 +366,7 @@ class NeblioSlackBot:
                             else:
                                 self.__send_response("Ummm... sorry old mate, I don't know how to respond to that.", message_channel)
 
-                except (WebSocketConnectionClosedException, ConnectionError):
+                except WebSocketConnectionClosedException:
                     logging.error(traceback.format_exc())
                     logging.warning("Connection lost. Attempting to reconnect in 30 seconds")
                     time.sleep(30)
